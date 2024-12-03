@@ -1,0 +1,22 @@
+#Make contact maps with Juicer, version 1.9.9 might be faster
+
+#1: first map for omni-c data with contig assembly
+nohup java -Xmx48000m -jar ~/Softwares/juicer_tools.1.9.9_jcuda.0.8.jar pre mapped.pairs contact_map_juicer1.9.9.hic Purged_primary_contigs_hifi-presets.genome &> jucier.out & 
+
+-------------------------------------------------------------
+#2: map contacts for scaffolded assembly
+  #A. Index ie make chromosome size file 
+
+samtools faidx mappedPT_yahs_scaffolds_final.fa 
+cut -f1-2 mappedPT_yahs_scaffolds_final.fa.fai > scaffolds_final.chrom.sizes 
+
+  #B. Convert the HiC alignment file (BAM/BED/BIN) to a file required by juicer_tools using the tool juicer pre. 
+  #To save time, BIN file is recommended which has already been generated in the scaffolding step 
+
+(~/Softwares/yahs/juicer pre mappedPT_yahs.bin mappedPT_yahs_scaffolds_final.agp Purged_primary_contigs_hifi-presets.fa.fai | sort -k2,2d -k6,6d -T ./ --parallel=8 -S32G | awk 'NF' > alignments_sorted.txt.part) && (mv alignments_sorted.txt.part alignments_sorted.txt) 
+
+  #C. Create map 
+
+(java -Xmx48000m  -Djava.awt.headless=true -jar -Xmx32G ~/Softwares/juicer_tools_1.22.01.jar pre alignments_sorted.txt out.hic.part scaffolds_final.chrom.sizes) && (mv out.hic.part scaffolded_contactmap.hic) 
+
+#Visualize .hic files with https://www.aidenlab.org/juicebox/ and manually edit if needed
