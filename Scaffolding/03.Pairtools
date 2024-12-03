@@ -1,0 +1,34 @@
+#1. Create genome file
+cut -f1,2 Purged_primary_contigs_hifi-presets.fa.fai > Purged_primary_contigs_hifi-presets.genome
+
+#2. Record valid ligation events, here with min mapping quality of 40
+~/Softwares/pairtools parse --min-mapq 40 --walks-policy 5unique --max-inter-align-gap 30 --nproc-in 8 --nproc-out 8 --chroms-path Purged_primary_contigs_hifi-presets.genome aligned.sam > parsed.pairsam 
+
+#3. Sort pairsam 
+~/Softwares/pairtools sort --nproc 16 --tmpdir=/path/to/temp/ parsed.pairsam > sorted.pairsam 
+
+#4. Mark duplicates and output stats (--output-stats)
+#pairtools dedup detects molecules that could be formed via PCR duplication and tags them as “DD” pair type. These pairs are excluded from downstream analysis. 
+
+~/Softwares/pairtools dedup --nproc-in 8 --nproc-out 8 --mark-dups --output-stats stats.txt --output dedup.pairsam sorted.pairsam 
+
+#5. Split into sam and pairs file 
+~/Softwares/pairtools split --nproc-in 8 --nproc-out 8 --output-pairs mapped.pairs --output-sam unsorted.bam dedup.pairsam 
+
+#6. Generate final bam 
+samtools sort -@16 -T /home/marevo/temp/temp.bam -o mapped.PT.bam unsorted.bam 
+samtools index mapped.PT.bam 
+
+#Calcualte coverage distribution 
+samtools depth mapped.PT.bam > coverage.txt 
+
+#Calculate genome size
+samtools view -H mapped.PT.bam | grep -P '^@SQ' | cut -f 3 -d ':' | awk '{sum+=$1} END {print sum}' > genome_size.txt 
+
+#Calculate total read depth
+samtools depth mapped.PT.bam > coverage.txt 
+
+#average depth
+awk '{sum+=$3} END {print sum/NR}' coverage.txt 
+
+#Calculate coverage: total depth/genome size 
