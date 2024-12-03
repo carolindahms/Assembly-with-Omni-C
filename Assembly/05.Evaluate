@@ -30,3 +30,7 @@ gfastats greyreef_k21_purge1.asm.a_ctg.fa 2676017194 --stats
 #Combine results into one table: 
 
 awk 'NR==FNR {h[$2] = $3; next} {print $1,$2,$3,h[$2]}' primary_gfastats_k21 alt_gfastats_k21 > prim_alt_gfastats_k21 
+
+  C. Merqury for both primary and alternate haplotigs
+
+nohup bash ~/Softwares/merqury/merqury.sh cpmlt21.meryl greyreef_k21_purge1.asm.p_ctg.fa greyreef_k21_purge1.asm.a_ctg.fa merq_k21_prim_alt &> merq21joined.out &
