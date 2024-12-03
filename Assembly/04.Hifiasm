@@ -1,0 +1,17 @@
+#Run hifiasm with different settings (here with kmer = 21)
+hifiasm -o greyreef_t15.asm -t 15 -k 21 greyreef_complete.fastq.gz 
+
+#for example, testing different -s to specify the minimum number of overlaps required for two reads to be considered as part of the same assembly unit. The lower the stricter filtering.
+for s in 0.35 0.55 0.75; do
+  hifiasm -o greyreef_s=${s}.asm -t 15 -s ${s} -k 21 greyreef_complete.fastq.gz 
+done
+
+#with light purging for primary and alternative contigs 
+hifiasm -o greyreef_k21_lightpurge.asm --primary -t 20 -l 1 -k21 --hg-size 2.655G greyreef_complete.fastq.gz 
+
+#Convert output to fasta format, e.g.:
+#primary haplotig
+awk '/^S/{print ">"$2"\n"$3}' greyreef_k21_lightpurge.asm.p_ctg.gfa | fold > greyreef_complt_lightpurge.asm.p_ctg.fa
+
+#alternate
+awk '/^S/{print ">"$2"\n"$3}' greyreef_k21_lightpurge.asm.a_ctg.gfa | fold > greyreef_complt_lightpurge.asm.a_ctg.fa 
