@@ -1,0 +1,32 @@
+#Assess quality with BBtools, e.g. for one primary haplotig assembly:
+
+~/Softwares/bbmap/stats.sh in=greyreef_k21_purge1.asm.bp.hap1.p_ctg.fa 
+  
+#Compare multiple hifiasm assemblies with different parameters 
+
+~/Softwares/bbmap/statswrapper.sh in=primary.fasta,greyreef_70gb.asm.bp.p_ctg.fa,greyreef_70gb.asm.bp.hap1.p_ctg.fa,greyreef_70gb_s0.35.asm.bp.p_ctg.fa,greyreef_70gb_s0.35.asm.bp.hap1.p_ctg.fa,greyreef_70gb_s0.75.asm.bp.p_ctg.fa,greyreef_70gb_s0.75.asm.bp.hap1.p_ctg.fa format=6 > comparison_hifiasm_0.35_0.75_STATS 
+
+#Evaluate assemblies with gfastats, BUSCO and Mercury 
+
+  A.Busco (v5.6.1): 
+
+#for primary and alternate haplotigs with vertebrata database
+
+nohup ~/Softwares/busco/bin/busco -i greyreef_k21_purge1.asm.p_ctg.fa -m genome -l vertebrata -o BUSCO_k21_primary -c 12  &> buscok21-prim.out & 
+
+nohup ~/Softwares/busco/bin/busco -i greyreef_k21_purge1.asm.a_ctg.fa -m genome -l vertebrata -o BUSCO_k21_alt -c 12  &> buscok21-alt.out & 
+
+#make summary plots: 
+
+python ~/Softwares/busco/scripts/generate_plot.py -wd BUSCO_k21_primary
+python ~/Softwares/busco/scripts/generate_plot.py -wd BUSCO_k21_alt
+
+  B. gfastats with genome size: 
+
+gfastats greyreef_k21_purge1.asm.p_ctg.fa 2676017194 --stats 
+
+gfastats greyreef_k21_purge1.asm.a_ctg.fa 2676017194 --stats 
+
+#Combine results into one table: 
+
+awk 'NR==FNR {h[$2] = $3; next} {print $1,$2,$3,h[$2]}' primary_gfastats_k21 alt_gfastats_k21 > prim_alt_gfastats_k21 
