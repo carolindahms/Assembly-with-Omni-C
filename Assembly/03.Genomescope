@@ -1,0 +1,13 @@
+#Run Genomescope2.0, get kmer based genome size estimate, which can be used for best_k.sh script if previously unknown
+
+for k in 17 18 19 20 21 22 23 31; do
+  Rscript ~/Softwares/genomescope2.0/genomescope.R -i meryl${k}.histo -k ${k} -p 2 -o ./genomescope_kmer${k}
+done
+
+#From GenomeScope model summary save parameters for purging later
+
+Genome size: 2,676,017,194 bp 
+
+Transition parameter: kmercov*1.5 
+
+Max depth: transition param*3 
