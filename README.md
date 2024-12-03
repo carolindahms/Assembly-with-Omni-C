@@ -20,17 +20,13 @@
 1. Preprocess
    * FastQC
 2. Map reads separately with bwa mem following steps from [Dovetail tutorial](https://omni-c.readthedocs.io/en/latest/fastq_to_bam.html) 
-3. Record valid ligation events with pairtools 
-4. Sort pairsam 
-5. Mark duplicates
-6. Generate bam
-7. Quality control of mapped Hi-C reads
-8. Scaffolding with YaHS
-9. Quality control of scaffolds
-   * gfastats and QUAST
-10. Omni-C contact maps
-11. Check final assembly for contaminants
-   * Clean assembly with NCBI FCS for adaptors and contaminants
+3. Pairtools to generate bam file + QC
+   * Record valid ligation events with pairtools
+   * Sort pairsam
+   * Mark duplicates
+4. Scaffolding with YaHS + QC + [remove contaminants](https://github.com/ncbi/fcs)
+5. Omni-C contact maps
+
 
 
 
