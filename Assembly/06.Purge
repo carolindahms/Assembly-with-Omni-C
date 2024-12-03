@@ -1,0 +1,103 @@
+#1: PURGE PRIMARY ASSEMBLY
+#need to think about what presets work for your data. Here the reference seqeuence is greyreef.fastq.gz
+A. minimap2
+#VGP suggested presets:
+~/Softwares/minimap2/minimap2 -x asm5 greyreef.fastq.gz greyreef_k21_purge1.asm.p_ctg.fa -k21 -w21 -A1 -B19 -O39,81 -E3,1 -s200 -z200 --min-occ-floor=100 -t 15 > primary-minimap2.paf  
+
+#Presets for pacbio hifi data: 
+~/Softwares/minimap2/minimap2 -x map-hifi greyreef.fastq.gz greyreef_complt_k21_purge1.asm.p_ctg.fa -t 15 > primary-minimap2_hifi-presets.paf 
+
+B. purge_dups 
+
+~/Softwares/purge_dups/src/pbcstat primary-minimap2_hifi-presets.paf  
+
+#use m and u stats from Genomescope model:
+#-m mid coverage represents the transition between haploid and diploid coverages. Contigs with average coverage below mid coverage are tested for haplotypic duplications.
+#-u Contigs with average coverage above high coverage are used for classifying contigs as 'REPEAT' in purge_dups' BED output. 
+
+~/Softwares/purge_dups/src/calcuts -m 26 -u 78 PB.stat > cutoffs 2>calcults.log 
+python hist_plot.py -c cutoffs PB.stat PB.hist.png 
+
+#Split primary assembly fastas 
+
+~/Softwares/purge_dups/src/split_fa ../greyreef_k21_purge1.asm.p_ctg.fa > split_primary.fa 
+
+#Build index in minmap2 
+
+nohup ~/Softwares/minimap2/minimap2 -d split_primary.mmi split_primary.fa -k21 -w21 --idx-no-seq -t 10 &> minimap2-indexonly_splitprimary.out & 
+
+#Construct self-homology, e.g. presets with k = 19 
+
+~/Softwares/minimap2/minimap2 split_primary.fa split_primary.fa -DP -k19 -w19 -m200 -t 10 > selfhomol-prim19.paf  
+
+#get dups_BED with 2 rounds (-2), omit for only one round
+
+~/Softwares/purge_dups/src/purge_dups -2  -T cutoffs -c hifi-presets.base.cov selfhomol-prim19.paf > dups.bed 2> purge_dups.log 
+
+#get_seqs 
+
+~/Softwares/purge_dups/src/get_seqs -e dups.bed greyreef_k21_purge1.asm.p_ctg.fa 
+
+#Rename output files into Purged_primary_contigs_hifi-presets.fa and Alternate_contigs_hifi-presets.fa for clarity
+-------------------------------------------------------------------------------------------------------------------
+
+#2: PURGE ALTERNATE ASSEMBLY
+
+#Concatenate fastas: a) alternate haplotig and b) purged alternate haplotigs output from purging the primary haplotig in previous step: 
+
+cat ../greyreef_k21_purge1.asm.a_ctg.fa Alternate_contigs_hifi-presets.fa > Alternate-hifi-full.fa 
+
+~/Softwares/minimap2/minimap2 -x map-hifi Alternate-hifi-fulla.fa ../greyreef.fastq.gz -t 15 > Reads_mapped_to_alternate.paf  
+
+#repeat steps: purge_dups 
+
+~/Softwares/purge_dups/src/pbcstat Reads_mapped_to_alternate.paf 
+
+~/Softwares/purge_dups/src/calcuts -u 78 alt.stat > cutoffs_alt 2>calcults.log 
+
+python hist_plot.py -c cutoffs_alt alt.stat alternate.hist.png 
+
+#Split primary assembly fastas 
+
+~/Softwares/purge_dups/src/split_fa Alternate-hifi-full.fa > split_alternate.fa 
+
+#Build index in minmap2 
+
+nohup ~/Softwares/minimap2/minimap2 -d split_alternate.mmi split_alternate.fa -k19 -w19 --idx-no-seq -t 10 &> minimap2-indexonly_splitprimary.out & 
+
+#Construct self-homology 
+
+# presets with k 19 
+
+~/Softwares/minimap2/minimap2 split_alternate.fa split_alternate.fa -DP -k19 -w19 -m200 -t 10 > selfhomol-alt.paf  
+
+#dups_BED 
+
+~/Softwares/purge_dups/src/purge_dups -2  -T cutoffs_alt -c alt.base.cov selfhomol-alt.paf > dups-alt.bed 2> purge_dups.log 
+
+#get_seqs 
+
+~/Softwares/purge_dups/src/get_seqs -e dups-alt.bed Alternate-hifi-full.fa 
+
+#Rename into Purged_Alternate_contigs_hifi-presets.fa and Alternate_haplotype_contigs-hifi-presets.fa 
+
+-------------------------------------------------------------------------------------------------------
+#10. QUALITY CONTROL of purged assemblies 
+
+  A. BUSCO 
+nohup ~/Softwares/busco/bin/busco -i ./Purge/Purged_primary_contigs_hifi-presets.fa -m genome -l vertebrata -o BUSCOvertebrata-purged-prim -c 20 &> buscopurg-primhifi.out & 
+python ~/Softwares/busco/scripts/generate_plot.py -wd BUSCOvertebrata-purged-prim 
+
+nohup ~/Softwares/busco/bin/busco -i ./Purge/Purged_Alternate_contigs_hifi-presets.fa -m genome -l vertebrata  -f -o BUSCOvertebrata-purged-alt -c 15 &> buscopurg-althifi.out & 
+python ~/Softwares/busco/scripts/generate_plot.py -wd BUSCOvertebrata-purged-alt 
+
+  B. gfastats
+gfastats Purged_primary_contigs_hifi-presets.fa 2676017194 –stats  
+
+gfastats Purged_Alternate_contigs_hifi-presets.fa 2676017194 –stats 
+
+  C. Merqury #check if plots improved
+
+nohup bash ~/Softwares/merqury/merqury.sh k21.meryl ./Purge/Purged_primary_contigs_hifi-presets.fa ./Purge/Purged_Alternate_contigs_hifi-presets.fa merq_k21_prim_alt_purged &> merqpurged.out & 
+
+ 
