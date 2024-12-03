@@ -1,0 +1,19 @@
+#Convert Pacbio Revio bam files to fastq with pbtk  
+
+`bam2fastq -o greyreef A66-Pool__1.bam A66-Pool__2.bam A66-Pool__3.bam> greyreef_complete.fastq.gz`
+
+#Asses read-length distribution in R plots: 
+
+`bioawk -c fastx '{print "PacBio_HiFi," length($seq)}' greyreef_complete.fastq.gz >> length.csv`
+
+#Get number of reads: 
+
+`zcat greyreef_complete.fastq.gz | awk 'NR % 4 == 1' | wc -l`
+
+#Remove adaptors with HifiAdapterFilt and BBTools
+
+bash /Softwares/HifiAdapterFilt/hifiadapterfilt.sh -p greyreef_complete -o ./hifilt 
+
+bbduk.sh in=greyreef_complete.fastq.gz out=clean_complt_bbmap.fq ref=~/Softwares/bbmap/resources/adapters.fa ktrim=r k=23 mink=11 hdist=1 tpe tbo 
+
+  
