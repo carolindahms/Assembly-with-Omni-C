@@ -10,5 +10,8 @@ gfastats mappedPT_yahs_scaffolds_final.fa 2924733132
 B. QUAST, compare as many assemblies as wnated, here the primary and alternate contig assemblies are compared to the scaffolded assembly
 python ~/quast-5.2.0/quast.py Purged_primary_contigs_hifi-presets.fa Alternate_contigs_hifi-presets.fa mappedPT_yahs_scaffolds_final.fa 
 
+C. BUSCO
+D. Merqury plots and stats (Base pair QV, kmer completeness)
+
 #finally check and clean assembly with NCBI FCS for adaptors and contaminants: 
 run_fcsadaptor.sh --fasta-input mappedPT_yahs_scaffolds_final.fa --output-dir ./fsc --euk
