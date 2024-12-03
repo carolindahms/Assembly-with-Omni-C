@@ -1,0 +1,2 @@
+#Quick check of OmniC reads:
+~/Softwares/FastQC/fastqc -o ./ forward_OmniC.fq.gz reverse_OmniC.fq.gz 
