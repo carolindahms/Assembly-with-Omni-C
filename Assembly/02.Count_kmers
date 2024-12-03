@@ -1,0 +1,6 @@
+for k in 17 18 19 20 21 22 23 31; do
+  meryl count k=${k} greyreef_complete.fastq.gz output k${k}.meryl 
+  meryl histogram ./k${k}.meryl > meryl${k}.histo 
+done
+# get best k with merqury script
+best_k.sh -c genome_size
