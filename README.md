@@ -24,7 +24,7 @@
    * Record valid ligation events with pairtools
    * Sort pairsam
    * Mark duplicates
-4. Scaffolding with YaHS + QC + [remove contaminants](https://github.com/ncbi/fcs)
+4. Scaffolding with YaHS + QC + [remove contaminants](https://github.com/ncbi/fcs/blob/main/dist/run_fcsadaptor.sh)
 5. Omni-C contact maps
 
 
